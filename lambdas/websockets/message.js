@@ -12,17 +12,22 @@ exports.handler = async event => {
     const body = JSON.parse(event.body);
 
     try{
-        const record = await Dynamo.get(connectionID, tableName);
-        const {messages, domainName, stage} = record;
-        messages.push(body.message);
-        const data = {
-            ...record,
-            messages
-        };
-        await Dynamo.write(data, tableName);
+        // send message to other opponent
+        if(body.method === 'init'){
+            const senderRecord = await Dynamo.get(connectionID, tableName);
+            const oppositionRecord = await Dynamo.get(senderRecord.opponentId, tableName);
+            const {domainName, stage, ID, side} = oppositionRecord;
 
-        await WS.send({domainName, stage, connectionID, message: "This is a reply."});
-
+            await WS.send({
+                domainName,
+                stage,
+                connectionID: ID,
+                message: JSON.stringify({
+                    foundOpponent: true,
+                    side,
+                }),
+            });
+        }
         return Responses._200({message: "received message"});
     }catch(error){
         return Responses._400({message: "Message could not be received."})

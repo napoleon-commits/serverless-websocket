@@ -1,5 +1,6 @@
 const Responses = require('../common/API_Responses');
 const Dynamo = require('../common/Dynamo');
+const WS = require('../common/WebsocketMessage');
 
 const tableName = 'WebsocketUsers';
 
@@ -15,6 +16,7 @@ exports.handler = async event => {
         stage,
         opponentId: "",
         foundOpponent: false,
+        side: (Math.floor(Math.random()*100000) % 2),
     };
 
     // scan table
@@ -32,7 +34,7 @@ exports.handler = async event => {
     } else { // pairing opponents
         const randomOpponent = scanData.Items[Math.floor(Math.random() * scanData.Items.length)];
         // update old
-        const updateData = await Dynamo.update({
+        await Dynamo.update({
             TableName: tableName,
             Key: {
                 ID: String(randomOpponent.ID),
@@ -44,7 +46,9 @@ exports.handler = async event => {
             },
             ReturnValues: "UPDATED_NEW"
         });
-        
+
+        // create opposite side
+        const playerSide = (randomOpponent.side === 1) ? 0 : 1;
 
         // write new opponent
         await Dynamo.write({
@@ -54,7 +58,21 @@ exports.handler = async event => {
             stage,
             opponentId: randomOpponent.ID,
             foundOpponent: true,
+            side: playerSide,
+            init: false,
         }, tableName);
+
+        // send messages former player
+        await WS.send({
+            domainName: randomOpponent.domainName, 
+            stage: randomOpponent.stage,
+            connectionID: randomOpponent.ID, 
+            message: JSON.stringify({
+                foundOpponent: true,
+                side: randomOpponent.side,
+                method: 'init',
+            }),
+        });
     }
 
     return Responses._200({message: "connected"});
