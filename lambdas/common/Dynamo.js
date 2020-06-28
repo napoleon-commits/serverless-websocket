@@ -49,6 +49,14 @@ const Dynamo = {
         };
 
         return documentClient.delete(params).promise();
+    },
+
+    async scan(params){
+        return documentClient.scan(params).promise();
+    },
+
+    async update(params){
+        return documentClient.update(params).promise();
     }
 };
 module.exports = Dynamo;
