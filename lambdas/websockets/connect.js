@@ -17,6 +17,7 @@ exports.handler = async event => {
         opponentId: "",
         foundOpponent: false,
         side: (Math.floor(Math.random()*100000) % 2),
+        remainingTime: 180000,
     };
 
     // scan table
@@ -60,6 +61,7 @@ exports.handler = async event => {
             foundOpponent: true,
             side: playerSide,
             init: false,
+            remainingTime: 180000,
         }, tableName);
 
         // send messages former player
