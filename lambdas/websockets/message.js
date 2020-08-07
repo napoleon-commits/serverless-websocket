@@ -31,7 +31,7 @@ exports.handler = async event => {
             const senderRecord = await Dynamo.get(connectionID, tableName);
             const oppositionRecord = await Dynamo.get(senderRecord.opponentId, tableName);
             const {domainName, stage, ID} = oppositionRecord;
-            const {rank, file, type} = body;
+            const {rank, file, type, playerSide} = body;
 
             await WS.send({
                 domainName,
@@ -42,6 +42,7 @@ exports.handler = async event => {
                         rank,
                         file,
                         type,
+                        playerSide,
                     }
                 })
             });
